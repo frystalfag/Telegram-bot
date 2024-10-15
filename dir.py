@@ -1,4 +1,4 @@
-class dir:
+class Dir:
     def directory(self):
         ukrainian_to_english = {
             # Природа (Nature)
