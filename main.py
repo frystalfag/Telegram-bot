@@ -80,5 +80,60 @@ def add_xp(username, xp):
 
     connect.close()
 
+@bot.message_handler(commands=['profile'])
+def profile(message):
+    connect = db_conn()
+    cursor = connect.cursor()
+
+    cursor.execute('SELECT * FROM User WHERE Name=?', (message.from_user.username,))
+    user = cursor.fetchone()
+
+    if user:
+        username = message.from_user.username
+        xp = user[2]
+        rate = user[3]
+        date_joined = user[4]
+
+        profile_info = (f"👤 Профіль користувача: @{username}\n"
+                        f"🏆 Рейтинг: {rate}\n"
+                        f"🎯 Досвід (XP): {xp}\n"
+                        f"📅 Дата приєднання: {date_joined}")
+
+        bot.send_message(message.chat.id, profile_info)
+    else:
+        bot.send_message(message.chat.id, "Профіль не знайдено. Скористайтесь командою /start, щоб створити профіль.")
+
+@bot.message_handler(commands=['find'])
+def find_user(message):
+    msg = bot.send_message(message.chat.id, "Введіть ім'я користувача, якого хочете знайти:")
+    bot.register_next_step_handler(msg, search_user)
+
+
+def search_user(message):
+    search_name = message.text.strip().lower()
+
+    connect = db_conn()
+    cursor = connect.cursor()
+
+    cursor.execute('SELECT * FROM User WHERE LOWER(Name)=?', (search_name,))
+    user = cursor.fetchone()
+
+    if user:
+        username = user[1]
+        xp = user[2]
+        rate = user[3]
+        date_joined = user[4]
+
+        profile_info = (f"👤 Знайдений профіль: @{username}\n"
+                        f"🏆 Рейтинг: {rate}\n"
+                        f"🎯 Досвід (XP): {xp}\n"
+                        f"📅 Дата приєднання: {date_joined}")
+
+        bot.send_message(message.chat.id, profile_info)
+    else:
+        bot.send_message(message.chat.id, f"Користувача з ім'ям {search_name} не знайдено.")
+
+    connect.close()
+
 # @bot.message_handler(commands=['Add'])
 bot.polling()
