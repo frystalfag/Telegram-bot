@@ -6,6 +6,8 @@ import random
 
 bot = telebot.TeleBot('7870390365:AAH2U5ElAoactg7XN44zhfgJkykBtC1P1Cs')
 
+dir1 = {}
+
 def db_conn():
     return sqlite3.connect('DBTelegramBot.sql')
 
@@ -52,19 +54,34 @@ def start(message):
 
 @bot.message_handler(commands=['play'])
 def start_game(message):
+    dir1[message.from_user.username] = True
     english_word, ukrainian_translation = random.choice(list(words.items()))
-    bot.send_message(message.chat.id, f"Переклади це слово: *{english_word}* з англійської на українську!", parse_mode='Markdown')
+    bot.send_message(message.chat.id, f"Переклади це слово: *{english_word}* з української на англійську!", parse_mode='Markdown')
     bot.register_next_step_handler(message, check_translation, english_word, ukrainian_translation)
+
 
 
 def check_translation(message, english_word, ukrainian_translation):
     user_answer = message.text.strip().lower()
 
+    if message.text.startswith('/stop'):
+        return None
+
     if user_answer == ukrainian_translation:
-        bot.send_message(message.chat.id, "✅ Правильно! Ти молодець!")
+        bot.send_message(message.chat.id, "✅ Правильно! Ти молодець! \n\n 🚀Щоб зупинити гру напишіть /stop")
         add_xp(message.from_user.username, 10)
     else:
-        bot.send_message(message.chat.id, f"❌ Неправильно. Правильна відповідь: *{ukrainian_translation}*.", parse_mode='Markdown')
+        bot.send_message(message.chat.id, f"❌ Неправильно. Правильна відповідь: *{ukrainian_translation}*. "
+                                          f"\n\n 🚀Щоб зупинити гру напишіть /stop", parse_mode='Markdown')
+
+    if dir1[message.from_user.username]:
+        start_game(message)
+
+
+@bot.message_handler(commands=['stop'])
+def stop_game(message):
+    dir1[message.from_user.username] = False
+    bot.send_message(message.chat.id, "✅ Гра закінчена!")
 
 def add_xp(username, xp):
     connect = db_conn()
